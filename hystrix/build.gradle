@@ -1,0 +1,20 @@
+import zerotocloud.*
+
+task cloneRepo(type: CloneRepo) {
+    repository = 'https://github.com/Netflix/hystrix.git'
+}
+
+task buildRepo(type: Build) {
+    dependsOn 'cloneRepo'
+    moduleDir = cloneRepo.gitDir
+    arguments = [':hystrix-dashboard:build', '--stacktrace']
+}
+
+import org.apache.tools.ant.filters.*
+ospackage {
+    def dist = new File(buildRepo.moduleDir, 'hystrix-dashboard/build/libs/hystrix-dashboard-1.4.0-RC6-SNAPSHOT.war')
+    from(dist) {
+        into('/var/lib/tomcat7/webapps')
+    }
+}
+buildDeb.dependsOn(buildRepo)
