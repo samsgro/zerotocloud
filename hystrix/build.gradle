@@ -4,15 +4,24 @@ task cloneRepo(type: CloneRepo) {
     repository = 'https://github.com/Netflix/hystrix.git'
 }
 
+task patchRepo {
+  dependsOn 'cloneRepo'
+  mustRunAfter 'cloneRepo'
+  doFirst { 
+ 	   new File(cloneRepo.gitDir, 'hystrix-dashboard/build.gradle').append('\nwar { war.archiveName "ROOT.war" }')
+  }
+}
+
 task buildRepo(type: Build) {
-    dependsOn 'cloneRepo'
+    dependsOn 'cloneRepo', 'patchRepo'
+    mustRunAfter 'patchRepo'
     moduleDir = cloneRepo.gitDir
     arguments = [':hystrix-dashboard:build', '--stacktrace']
 }
 
 import org.apache.tools.ant.filters.*
 ospackage {
-    def dist = new File(buildRepo.moduleDir, 'hystrix-dashboard/build/libs/hystrix-dashboard-1.4.0-RC6-SNAPSHOT.war')
+    def dist = new File(buildRepo.moduleDir, 'hystrix-dashboard/build/libs/ROOT.war')
     from(dist) {
         into('/var/lib/tomcat7/webapps')
     }
